@@ -1,0 +1,16 @@
+# Node and Frontend
+frontend/node_modules/
+frontend/dist/
+.npm
+
+# Python and Backend
+backend/venv/
+backend/__pycache__/
+*.pyc
+
+# Secrets and Passwords
+.env
+
+# OS Files
+.DS_Store
+Thumbs.db

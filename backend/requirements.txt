@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+langchain
+langchain-google-genai
+pypdf
+python-docx
+psycopg2-binary
+pgvector
+python-dotenv
