@@ -7,3 +7,4 @@ python-docx
 psycopg2-binary
 pgvector
 python-dotenv
+python-multipart
