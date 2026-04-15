@@ -14,7 +14,7 @@ def process_and_save_chunks(filename: str, text_chunks: list):
         return
         
     # Initialize the embedding model
-    embedder = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
+    embedder = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
     
     # Generate vector embeddings
     embeddings = embedder.embed_documents(text_chunks)

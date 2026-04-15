@@ -29,7 +29,7 @@ def init_db():
                 id SERIAL PRIMARY KEY,
                 filename TEXT,
                 chunk_text TEXT,
-                embedding VECTOR(768)
+                embedding VECTOR(3072)
             );
         """)
         
