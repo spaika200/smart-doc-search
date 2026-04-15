@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File
 import shutil
 import os
 from pdf_reader import extract_text_from_pdf
+from text_processor import split_text_into_chunks # <-- NEW IMPORT
 
 app = FastAPI(title="Smart Document Search API")
 
@@ -11,17 +12,18 @@ def read_root():
 
 @app.post("/upload/")
 async def upload_document(file: UploadFile = File(...)):
-    # 1. Save the uploaded file temporarily to the server
     temp_file_path = f"temp_{file.filename}"
     with open(temp_file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
     extracted_text = extract_text_from_pdf(temp_file_path)
     
+    text_chunks = split_text_into_chunks(extracted_text)
+    
     os.remove(temp_file_path)
     
     return {
         "filename": file.filename, 
-        "message": "File processed successfully!",
-        "text_preview": extracted_text[:500]
+        "total_chunks": len(text_chunks),
+        "first_chunk_preview": text_chunks[0] if text_chunks else "No text found."
     }
