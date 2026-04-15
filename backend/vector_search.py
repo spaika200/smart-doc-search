@@ -36,7 +36,7 @@ def query_vector_db(query: str, top_k: int = 4):
     finally:
         conn.close()
 
-def generate_rag_response(query: str):
+def generate_rag_response(query: str, history: list = None):
     """
     RAG Pipeline:
     1. Grabs top context from vector database
@@ -58,7 +58,17 @@ def generate_rag_response(query: str):
         context_text += f"\n--- [Allikas: {filename}] ---\n{chunk}\n"
         sources.add(filename)
         
-    # 3. Setup Prompt to force strict adherence to context and respond in Estonian
+    # 3. Compile history mapping
+    history_str = ""
+    if history:
+        # Get last 5 messages to avoid blowing up context window
+        recent_history = history[-5:]
+        history_str = "KONTEKSTI AJALUGU (EELNEV VESTLUS):\n"
+        for msg in recent_history:
+            role_label = "Kasutaja" if msg.get("role") == "user" else "Sina (AI)"
+            history_str += f"{role_label}: {msg.get('text')}\n"
+            
+    # 4. Setup Prompt to force strict adherence to context and respond in Estonian
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2)
     prompt = f"""
     You are an intelligent document search assistant (Nutikas dokumentide otsingusüsteem).
@@ -66,6 +76,8 @@ def generate_rag_response(query: str):
     Do NOT invent facts, hallucinate, or rely on external knowledge.
     If the answer cannot be confidently deduced from the Context, tell the user politely (in Estonian) that the document does not contain this information.
     You MUST answer in Estonian language.
+
+    {history_str}
 
     Context:
     {context_text}

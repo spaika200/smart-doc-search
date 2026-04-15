@@ -21,8 +21,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from typing import List, Optional
+
 class QueryRequest(BaseModel):
     query: str
+    history: Optional[List[dict]] = []
 
 @app.get("/")
 def read_root():
@@ -61,7 +64,7 @@ async def ask_question(request: QueryRequest):
     RAG Endpoint: takes a query, runs nearest-neighbor search, and gets an answer from LLM.
     """
     try:
-        response = generate_rag_response(request.query)
+        response = generate_rag_response(request.query, request.history)
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

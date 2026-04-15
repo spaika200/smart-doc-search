@@ -1,25 +1,25 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
 import './App.css';
 
 const API_URL = 'http://localhost:8000';
 
 function App() {
   const [documents, setDocuments] = useState([]);
-  const [messages, setMessages] = useState([{ role: 'bot', text: 'Tere! Olen sinu nutikas dokumentide assistent. Kuidas saan aidata?', sources: [] }]);
+  const [messages, setMessages] = useState([{ role: 'bot', text: 'Tere! Olen sinu nutikas dokumentide assistent. Kuidas saan aidata?', sources: [], context_snippets: [] }]);
   const [inputValue, setInputValue] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [modalSnippet, setModalSnippet] = useState(null); // {filename, text}
   
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // Fetch documents on mount
   useEffect(() => {
     fetchDocuments();
   }, []);
 
-  // Auto-scroll chat
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -46,21 +46,18 @@ function App() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       await fetchDocuments();
-      
-      // Notify via chat quietly
-      setMessages(prev => [...prev, { role: 'bot', text: `Fail "${file.name}" edukalt lisatud!` }]);
+      setMessages(prev => [...prev, { role: 'bot', text: `Fail **${file.name}** edukalt lisatud!` }]);
     } catch (err) {
       console.error('Upload failed', err);
       alert('Faili üleslaadimine ebaõnnestus.');
     } finally {
       setIsUploading(false);
-      e.target.value = null; // reset
+      e.target.value = null; 
     }
   };
 
   const handleDelete = async (filename) => {
     if (!window.confirm(`Kas soovid kustutada dokumenti: ${filename}?`)) return;
-    
     try {
       await axios.delete(`${API_URL}/documents/${filename}`);
       fetchDocuments();
@@ -74,14 +71,21 @@ function App() {
     
     const userQuery = inputValue.trim();
     setInputValue('');
+    
+    // Package history to send (latest 6 messages, filtering out system notifications without sources if we want)
+    const historyPayload = messages.map(m => ({ role: m.role, text: m.text }));
+    
     setMessages(prev => [...prev, { role: 'user', text: userQuery }]);
     setIsTyping(true);
 
     try {
-      const res = await axios.post(`${API_URL}/ask/`, { query: userQuery });
-      const { answer, sources } = res.data;
+      const res = await axios.post(`${API_URL}/ask/`, { 
+        query: userQuery,
+        history: historyPayload
+      });
       
-      setMessages(prev => [...prev, { role: 'bot', text: answer, sources }]);
+      const { answer, sources, context_snippets } = res.data;
+      setMessages(prev => [...prev, { role: 'bot', text: answer, sources, context_snippets }]);
     } catch (err) {
       console.error('Query failed:', err);
       setMessages(prev => [...prev, { role: 'bot', text: 'Vabandust, tekkis süsteemiviga päringu töötlemisel.' }]);
@@ -97,6 +101,14 @@ function App() {
     }
   };
 
+  const openSnippetModal = (filename, snippets) => {
+    // Find the specific snippet text from the backend's returned array
+    const snippetData = snippets?.find(s => s.filename === filename);
+    if (snippetData) {
+      setModalSnippet(snippetData);
+    }
+  };
+
   return (
     <div className="app-container">
       
@@ -109,7 +121,7 @@ function App() {
 
         <div className="upload-zone" onClick={() => fileInputRef.current?.click()}>
           {isUploading ? (
-            <div className="loader-spinner" style={{borderColor: "rgba(255,255,255,0.1)", borderTopColor: "var(--primary)", width: "32px", height: "32px"}} />
+            <div className="loader-spinner" style={{borderTopColor: "var(--primary)", width: "32px", height: "32px"}} />
           ) : (
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -160,14 +172,20 @@ function App() {
                <div className={`avatar ${msg.role}`}>
                  {msg.role === 'user' ? 'M' : 'AI'}
                </div>
-               <div style={{display: 'flex', flexDirection: 'column'}}>
+               <div style={{display: 'flex', flexDirection: 'column', width: '100%'}}>
                  <div className="message-bubble">
-                   {msg.text}
+                   <ReactMarkdown>{msg.text}</ReactMarkdown>
                  </div>
                  {msg.sources && msg.sources.length > 0 && (
                    <div className="sources-pill">
                      {msg.sources.map((src, i) => (
-                       <span className="source-tag" key={i}>📄 {src}</span>
+                       <span 
+                         className="source-tag clickable" 
+                         key={i}
+                         onClick={() => openSnippetModal(src, msg.context_snippets)}
+                       >
+                         📄 {src}
+                       </span>
                      ))}
                    </div>
                  )}
@@ -204,6 +222,21 @@ function App() {
           </div>
         </div>
       </main>
+
+      {/* Snippet Modal Overlay */}
+      {modalSnippet && (
+        <div className="modal-overlay" onClick={() => setModalSnippet(null)}>
+          <div className="modal-content glass-panel" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h4>Algallikas ({modalSnippet.filename})</h4>
+              <button className="btn-close" onClick={() => setModalSnippet(null)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <p className="snippet-text">"{modalSnippet.text}"</p>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
