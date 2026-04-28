@@ -41,7 +41,7 @@ async def upload_document(file: UploadFile = File(...)):
     with open(temp_file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Use our new document loader that handles PDF, DOCX, and TXT
+    # Extract text based on file format (PDF, DOCX, TXT)
     extracted_text = extract_text_from_file(temp_file_path, file.filename)
     
     if not extracted_text:
@@ -140,13 +140,11 @@ async def ask_question(request: QueryRequest):
     RAG Endpoint: takes a query, runs nearest-neighbor search, and gets an answer from LLM.
     """
     try:
-        # Save user message immediately if chat_id exists
         if request.chat_id:
             save_message(request.chat_id, "user", request.query)
 
         response = generate_rag_response(request.query, request.history, request.tone)
         
-        # Save bot message
         if request.chat_id:
             save_message(request.chat_id, "bot", response["answer"], response["sources"], response["context_snippets"])
             
