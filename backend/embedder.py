@@ -13,21 +13,16 @@ def process_and_save_chunks(filename: str, text_chunks: list):
     if not text_chunks:
         return
         
-    # Initialize the embedding model
     embedder = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
     
-    # Generate vector embeddings
     embeddings = embedder.embed_documents(text_chunks)
     
-    # Connect to PostgreSQL and insert the records
     conn = get_db_connection()
     try:
-        # Register the vector extension to handle VECTOR type in PostgreSQL
         register_vector(conn)
         
         cur = conn.cursor()
         
-        # Insert each chunk with its embedding
         for chunk, embedding in zip(text_chunks, embeddings):
             cur.execute(
                 """

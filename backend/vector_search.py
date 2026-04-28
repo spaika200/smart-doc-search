@@ -36,7 +36,7 @@ def query_vector_db(query: str, top_k: int = 4):
     finally:
         conn.close()
 
-def generate_rag_response(query: str, history: list = None):
+def generate_rag_response(query: str, history: list = None, tone: str = "Tavaline"):
     """
     RAG Pipeline:
     1. Grabs top context from vector database
@@ -61,14 +61,22 @@ def generate_rag_response(query: str, history: list = None):
     # 3. Compile history mapping
     history_str = ""
     if history:
-        # Get last 5 messages to avoid blowing up context window
         recent_history = history[-5:]
         history_str = "KONTEKSTI AJALUGU (EELNEV VESTLUS):\n"
         for msg in recent_history:
             role_label = "Kasutaja" if msg.get("role") == "user" else "Sina (AI)"
             history_str += f"{role_label}: {msg.get('text')}\n"
             
-    # 4. Setup Prompt to force strict adherence to context and respond in Estonian
+    tone_instruction = ""
+    if tone == "Juriidiline":
+        tone_instruction = "Kasuta juriidilist, ametlikku ja väga detailset keelt (Use legal, formal, and highly detailed language)."
+    elif tone == "Lihtne keel":
+        tone_instruction = "Vasta väga lihtsas ja arusaadavas eesti keeles, vältides keerulisi termineid (Answer in very simple and understandable Estonian, avoiding complex terms)."
+    elif tone == "Lühikokkuvõte":
+        tone_instruction = "Anna väga lühike ja konkreetne vastus, kasuta vajadusel punktloendit (Give a very short and concise answer, use bullet points if necessary)."
+    else:
+        tone_instruction = "Vasta neutraalselt ja viisakalt (Answer neutrally and politely)."
+
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2)
     prompt = f"""
     You are an intelligent document search assistant (Nutikas dokumentide otsingusüsteem).
@@ -76,6 +84,8 @@ def generate_rag_response(query: str, history: list = None):
     Do NOT invent facts, hallucinate, or rely on external knowledge.
     If the answer cannot be confidently deduced from the Context, tell the user politely (in Estonian) that the document does not contain this information.
     You MUST answer in Estonian language.
+    
+    TONE INSTRUCTION: {tone_instruction}
 
     {history_str}
 

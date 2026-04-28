@@ -12,6 +12,13 @@ function App() {
   const [isUploading, setIsUploading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [modalSnippet, setModalSnippet] = useState(null); // {filename, text}
+  const [selectedTone, setSelectedTone] = useState('Tavaline');
+
+  const SUGGESTED_CHIPS = ["Millised dokumendid on andmebaasis?", "Tee lühikokkuvõte", "Kuidas see süsteem töötab?"];
+  
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text);
+  };
   
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -81,7 +88,8 @@ function App() {
     try {
       const res = await axios.post(`${API_URL}/ask/`, { 
         query: userQuery,
-        history: historyPayload
+        history: historyPayload,
+        tone: selectedTone
       });
       
       const { answer, sources, context_snippets } = res.data;
@@ -176,19 +184,30 @@ function App() {
                  <div className="message-bubble">
                    <ReactMarkdown>{msg.text}</ReactMarkdown>
                  </div>
-                 {msg.sources && msg.sources.length > 0 && (
-                   <div className="sources-pill">
-                     {msg.sources.map((src, i) => (
-                       <span 
-                         className="source-tag clickable" 
-                         key={i}
-                         onClick={() => openSnippetModal(src, msg.context_snippets)}
-                       >
-                         📄 {src}
-                       </span>
-                     ))}
-                   </div>
-                 )}
+                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
+                   {msg.sources && msg.sources.length > 0 ? (
+                     <div className="sources-pill" style={{ marginTop: 0 }}>
+                       {msg.sources.map((src, i) => (
+                         <span 
+                           className="source-tag clickable" 
+                           key={i}
+                           onClick={() => openSnippetModal(src, msg.context_snippets)}
+                         >
+                           📄 {src}
+                         </span>
+                       ))}
+                     </div>
+                   ) : <div />}
+                   {msg.role === 'bot' && (
+                     <button className="btn-copy" onClick={() => handleCopy(msg.text)} title="Kopeeri vastus" style={{ marginTop: 0 }}>
+                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                       </svg>
+                       Kopeeri
+                     </button>
+                   )}
+                 </div>
                </div>
              </div>
           ))}
@@ -205,6 +224,28 @@ function App() {
         </div>
 
         <div className="chat-input-container">
+          {messages.length === 1 && (
+            <div className="suggested-chips">
+              {SUGGESTED_CHIPS.map((chip, idx) => (
+                <div key={idx} className="chip" onClick={() => setInputValue(chip)}>
+                  {chip}
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <div className="tone-toggles">
+            {['Tavaline', 'Lihtne keel', 'Lühikokkuvõte', 'Juriidiline'].map(tone => (
+              <button 
+                key={tone} 
+                className={`tone-btn ${selectedTone === tone ? 'active' : ''}`}
+                onClick={() => setSelectedTone(tone)}
+              >
+                {tone}
+              </button>
+            ))}
+          </div>
+
           <div className="input-box">
             <textarea 
               placeholder="Küsi midagi oma dokumentide kohta..."

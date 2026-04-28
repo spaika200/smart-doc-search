@@ -26,6 +26,7 @@ from typing import List, Optional
 class QueryRequest(BaseModel):
     query: str
     history: Optional[List[dict]] = []
+    tone: Optional[str] = "Tavaline"
 
 @app.get("/")
 def read_root():
@@ -64,7 +65,7 @@ async def ask_question(request: QueryRequest):
     RAG Endpoint: takes a query, runs nearest-neighbor search, and gets an answer from LLM.
     """
     try:
-        response = generate_rag_response(request.query, request.history)
+        response = generate_rag_response(request.query, request.history, request.tone)
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
