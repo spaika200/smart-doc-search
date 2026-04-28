@@ -132,49 +132,25 @@ def save_message(chat_id, role, text, sources=None, snippets=None):
     finally:
         conn.close()
 
-from vector_search import generate_rag_stream
-
-import asyncio
+from vector_search import generate_rag_response
 
 @app.post("/ask/")
 async def ask_question(request: QueryRequest):
     """
-    RAG Endpoint: Returns a StreamingResponse (SSE) with chunks.
+    RAG Endpoint: takes a query, runs nearest-neighbor search, and gets an answer from LLM.
     """
     try:
         # Save user message immediately if chat_id exists
-        save_message(request.chat_id, "user", request.query)
+        if request.chat_id:
+            save_message(request.chat_id, "user", request.query)
 
-        async def event_generator():
-            full_answer = ""
-            sources = []
-            snippets = []
-            async for data_str in generate_rag_stream(request.query, request.history, request.tone):
-                data = json.loads(data_str)
-                if data["type"] == "metadata":
-                    sources = data.get("sources", [])
-                    snippets = data.get("context_snippets", [])
-                elif data["type"] == "chunk":
-                    full_answer += data.get("text", "")
-                
-                # Yield SSE format
-                yield f"data: {data_str}\n\n"
-                # Force Uvicorn to flush the stream to the network immediately
-                await asyncio.sleep(0.02)
+        response = generate_rag_response(request.query, request.history, request.tone)
+        
+        # Save bot message
+        if request.chat_id:
+            save_message(request.chat_id, "bot", response["answer"], response["sources"], response["context_snippets"])
             
-            # After stream finishes, save bot message
-            save_message(request.chat_id, "bot", full_answer, sources, snippets)
-            yield "data: [DONE]\n\n"
-
-        return StreamingResponse(
-            event_generator(), 
-            media_type="text/event-stream",
-            headers={
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-                "X-Accel-Buffering": "no"
-            }
-        )
+        return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

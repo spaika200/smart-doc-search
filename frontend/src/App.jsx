@@ -127,91 +127,57 @@ function App() {
 
   const sendMessage = async () => {
     if (!inputValue.trim()) return;
-    
     const userQuery = inputValue.trim();
     setInputValue('');
-    
-    // Package history to send (latest 6 messages, filtering out system notifications without sources if we want)
     const historyPayload = messages.map(m => ({ role: m.role, text: m.text }));
     
     setMessages(prev => [...prev, { role: 'user', text: userQuery }]);
     setIsTyping(true);
 
     try {
-      if (!activeChatId) {
-         // Create chat if none exists
+      let currentChatId = activeChatId;
+      if (!currentChatId) {
          const cRes = await axios.post(`${API_URL}/chats/`, { title: userQuery.substring(0, 30) });
-         setActiveChatId(cRes.data.id);
+         currentChatId = cRes.data.id;
+         setActiveChatId(currentChatId);
          setChats(prev => [cRes.data, ...prev]);
-         // wait for state update in a real app, but here we can just use the ID
-         await streamResponse(userQuery, historyPayload, cRes.data.id);
-      } else {
-         await streamResponse(userQuery, historyPayload, activeChatId);
       }
+      
+      const res = await axios.post(`${API_URL}/ask/`, { 
+        query: userQuery,
+        history: historyPayload,
+        tone: selectedTone,
+        chat_id: currentChatId
+      });
+      
+      const { answer, sources, context_snippets } = res.data;
+      
+      // Start Typewriter Effect
+      setIsTyping(false);
+      setMessages(prev => [...prev, { role: 'bot', text: '', sources, context_snippets }]);
+      
+      let index = 0;
+      const speed = 20; // update interval ms
+      const charsPerTick = 3; // chars per tick
+      
+      const timer = setInterval(() => {
+         setMessages(prev => {
+            const newMsgs = [...prev];
+            newMsgs[newMsgs.length - 1] = {
+               ...newMsgs[newMsgs.length - 1],
+               text: answer.substring(0, index + charsPerTick)
+            };
+            return newMsgs;
+         });
+         index += charsPerTick;
+         if (index >= answer.length) clearInterval(timer);
+      }, speed);
+
     } catch (err) {
       console.error('Query failed:', err);
       setMessages(prev => [...prev, { role: 'bot', text: 'Vabandust, tekkis süsteemiviga päringu töötlemisel.' }]);
-    } finally {
       setIsTyping(false);
     }
-  };
-
-  const streamResponse = async (query, history, chatId) => {
-      const res = await fetch(`${API_URL}/ask/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          query: query,
-          history: history,
-          tone: selectedTone,
-          chat_id: chatId
-        })
-      });
-
-      if (!res.ok) throw new Error("Network error");
-      
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let botText = "";
-      let botSources = [];
-      let botSnippets = [];
-      
-      setMessages(prev => [...prev, { role: 'bot', text: '', sources: [], context_snippets: [] }]);
-      setIsTyping(false); // hide loader since stream started
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        const chunkStr = decoder.decode(value, { stream: true });
-        
-        const lines = chunkStr.split("\n\n");
-        for (const line of lines) {
-           if (line.startsWith("data: ")) {
-              const dataStr = line.slice(6);
-              if (dataStr === "[DONE]") break;
-              try {
-                 const data = JSON.parse(dataStr);
-                 if (data.type === "metadata") {
-                    botSources = data.sources;
-                    botSnippets = data.context_snippets;
-                 } else if (data.type === "chunk") {
-                    botText += data.text;
-                 }
-                 
-                 setMessages(prev => {
-                    const newMsgs = [...prev];
-                    newMsgs[newMsgs.length - 1] = {
-                       role: 'bot',
-                       text: botText,
-                       sources: botSources,
-                       context_snippets: botSnippets
-                    };
-                    return newMsgs;
-                 });
-              } catch(e) {}
-           }
-        }
-      }
   };
 
   const handleKeyDown = (e) => {
