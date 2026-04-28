@@ -80,12 +80,15 @@ def create_chat(request: dict):
 
 from vector_search import generate_chat_title
 
+import time
+
 @app.post("/chats/{chat_id}/generate_title")
 def generate_and_update_title(chat_id: int, request: dict):
     query = request.get("query", "")
     if not query:
         return {"title": "Uus vestlus"}
         
+    time.sleep(2) # Delay to prevent Gemini API 429 concurrent request rate limit
     title = generate_chat_title(query)
     
     conn = get_db_connection()
