@@ -39,7 +39,20 @@ All document embeddings are stored inside your local Docker PostgreSQL container
 
 ## 📦 Installation & Setup Guide
 
-### 1. Database (Docker)
+### 1. Environment Variables (.env)
+Because secret keys are hidden by Git (`.gitignore`), anyone downloading this project must create their own `.env` file before starting.
+Inside the `backend` folder, create a new file named exactly `.env` and paste the following inside:
+```env
+GOOGLE_API_KEY=your_gemini_api_key_here
+POSTGRES_USER=user
+POSTGRES_PASSWORD=password
+POSTGRES_DB=smart_search
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+```
+*(Note: You can generate a free Gemini API key from Google AI Studio if you don't have one).*
+
+### 2. Database (Docker)
 Ensure your PostgreSQL `pgvector` container is running in Docker Desktop and ports are mapped to `5432`.
 Run the database initializer script to create the necessary tables:
 ```bash
@@ -47,7 +60,7 @@ cd backend
 python database.py
 ```
 
-### 2. Backend Installation (FastAPI)
+### 3. Backend Installation (FastAPI)
 Navigate to the backend directory, initialize the environment, and install all libraries directly from `requirements.txt`:
 ```bash
 cd backend
@@ -60,7 +73,7 @@ To run the server:
 uvicorn main:app --reload
 ```
 
-### 3. Frontend Installation (React)
+### 4. Frontend Installation (React)
 Open a new terminal and install the frontend packages.
 ```bash
 cd frontend
