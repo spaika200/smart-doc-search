@@ -22,11 +22,14 @@ app.add_middleware(
 )
 
 from typing import List, Optional
+import json
+from fastapi.responses import StreamingResponse
 
 class QueryRequest(BaseModel):
     query: str
     history: Optional[List[dict]] = []
     tone: Optional[str] = "Tavaline"
+    chat_id: Optional[int] = None
 
 @app.get("/")
 def read_root():
@@ -59,14 +62,93 @@ async def upload_document(file: UploadFile = File(...)):
     }
 
 
+@app.post("/chats/")
+def create_chat(request: dict):
+    title = request.get("title", "Uus vestlus")
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("INSERT INTO chats (title) VALUES (%s) RETURNING id, title, created_at;", (title,))
+        chat = cur.fetchone()
+        conn.commit()
+        return {"id": chat[0], "title": chat[1]}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+@app.get("/chats/")
+def list_chats():
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT id, title FROM chats ORDER BY created_at DESC;")
+        chats = cur.fetchall()
+        return {"chats": [{"id": c[0], "title": c[1]} for c in chats]}
+    finally:
+        conn.close()
+
+@app.get("/chats/{chat_id}/messages")
+def get_chat_messages(chat_id: int):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT role, text, sources, context_snippets FROM chat_messages WHERE chat_id = %s ORDER BY created_at ASC;", (chat_id,))
+        messages = cur.fetchall()
+        result = []
+        for m in messages:
+            sources = json.loads(m[2]) if m[2] else []
+            snippets = json.loads(m[3]) if m[3] else []
+            result.append({"role": m[0], "text": m[1], "sources": sources, "context_snippets": snippets})
+        return {"messages": result}
+    finally:
+        conn.close()
+
+def save_message(chat_id, role, text, sources=None, snippets=None):
+    if not chat_id: return
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        s_json = json.dumps(sources) if sources else None
+        cs_json = json.dumps(snippets) if snippets else None
+        cur.execute("INSERT INTO chat_messages (chat_id, role, text, sources, context_snippets) VALUES (%s, %s, %s, %s, %s);",
+                    (chat_id, role, text, s_json, cs_json))
+        conn.commit()
+    finally:
+        conn.close()
+
+from vector_search import generate_rag_stream
+
 @app.post("/ask/")
 async def ask_question(request: QueryRequest):
     """
-    RAG Endpoint: takes a query, runs nearest-neighbor search, and gets an answer from LLM.
+    RAG Endpoint: Returns a StreamingResponse (SSE) with chunks.
     """
     try:
-        response = generate_rag_response(request.query, request.history, request.tone)
-        return response
+        # Save user message immediately if chat_id exists
+        save_message(request.chat_id, "user", request.query)
+
+        def event_generator():
+            full_answer = ""
+            sources = []
+            snippets = []
+            for data_str in generate_rag_stream(request.query, request.history, request.tone):
+                data = json.loads(data_str)
+                if data["type"] == "metadata":
+                    sources = data.get("sources", [])
+                    snippets = data.get("context_snippets", [])
+                elif data["type"] == "chunk":
+                    full_answer += data.get("text", "")
+                
+                # Yield SSE format
+                yield f"data: {data_str}\n\n"
+            
+            # After stream finishes, save bot message
+            save_message(request.chat_id, "bot", full_answer, sources, snippets)
+            yield "data: [DONE]\n\n"
+
+        return StreamingResponse(event_generator(), media_type="text/event-stream")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

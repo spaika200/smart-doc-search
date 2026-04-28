@@ -13,6 +13,8 @@ function App() {
   const [isTyping, setIsTyping] = useState(false);
   const [modalSnippet, setModalSnippet] = useState(null); // {filename, text}
   const [selectedTone, setSelectedTone] = useState('Tavaline');
+  const [chats, setChats] = useState([]);
+  const [activeChatId, setActiveChatId] = useState(null);
 
   const SUGGESTED_CHIPS = ["Millised dokumendid on andmebaasis?", "Tee lühikokkuvõte", "Kuidas see süsteem töötab?"];
   
@@ -25,7 +27,43 @@ function App() {
 
   useEffect(() => {
     fetchDocuments();
+    fetchChats();
   }, []);
+
+  const fetchChats = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/chats/`);
+      setChats(res.data.chats || []);
+    } catch (err) {
+      console.error('Error fetching chats:', err);
+    }
+  };
+
+  const loadChat = async (chatId) => {
+    setActiveChatId(chatId);
+    try {
+      const res = await axios.get(`${API_URL}/chats/${chatId}/messages`);
+      if (res.data.messages && res.data.messages.length > 0) {
+        setMessages(res.data.messages);
+      } else {
+        setMessages([{ role: 'bot', text: 'Tere! Olen sinu nutikas dokumentide assistent. Kuidas saan aidata?', sources: [], context_snippets: [] }]);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const createNewChat = async () => {
+    try {
+      const res = await axios.post(`${API_URL}/chats/`, { title: "Uus vestlus" });
+      const newChatId = res.data.id;
+      setChats(prev => [res.data, ...prev]);
+      setActiveChatId(newChatId);
+      setMessages([{ role: 'bot', text: 'Tere! Olen sinu nutikas dokumentide assistent. Kuidas saan aidata?', sources: [], context_snippets: [] }]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -86,20 +124,80 @@ function App() {
     setIsTyping(true);
 
     try {
-      const res = await axios.post(`${API_URL}/ask/`, { 
-        query: userQuery,
-        history: historyPayload,
-        tone: selectedTone
-      });
-      
-      const { answer, sources, context_snippets } = res.data;
-      setMessages(prev => [...prev, { role: 'bot', text: answer, sources, context_snippets }]);
+      if (!activeChatId) {
+         // Create chat if none exists
+         const cRes = await axios.post(`${API_URL}/chats/`, { title: userQuery.substring(0, 30) });
+         setActiveChatId(cRes.data.id);
+         setChats(prev => [cRes.data, ...prev]);
+         // wait for state update in a real app, but here we can just use the ID
+         await streamResponse(userQuery, historyPayload, cRes.data.id);
+      } else {
+         await streamResponse(userQuery, historyPayload, activeChatId);
+      }
     } catch (err) {
       console.error('Query failed:', err);
       setMessages(prev => [...prev, { role: 'bot', text: 'Vabandust, tekkis süsteemiviga päringu töötlemisel.' }]);
     } finally {
       setIsTyping(false);
     }
+  };
+
+  const streamResponse = async (query, history, chatId) => {
+      const res = await fetch(`${API_URL}/ask/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          query: query,
+          history: history,
+          tone: selectedTone,
+          chat_id: chatId
+        })
+      });
+
+      if (!res.ok) throw new Error("Network error");
+      
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let botText = "";
+      let botSources = [];
+      let botSnippets = [];
+      
+      setMessages(prev => [...prev, { role: 'bot', text: '', sources: [], context_snippets: [] }]);
+      setIsTyping(false); // hide loader since stream started
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        const chunkStr = decoder.decode(value, { stream: true });
+        
+        const lines = chunkStr.split("\n\n");
+        for (const line of lines) {
+           if (line.startsWith("data: ")) {
+              const dataStr = line.slice(6);
+              if (dataStr === "[DONE]") break;
+              try {
+                 const data = JSON.parse(dataStr);
+                 if (data.type === "metadata") {
+                    botSources = data.sources;
+                    botSnippets = data.context_snippets;
+                 } else if (data.type === "chunk") {
+                    botText += data.text;
+                 }
+                 
+                 setMessages(prev => {
+                    const newMsgs = [...prev];
+                    newMsgs[newMsgs.length - 1] = {
+                       role: 'bot',
+                       text: botText,
+                       sources: botSources,
+                       context_snippets: botSnippets
+                    };
+                    return newMsgs;
+                 });
+              } catch(e) {}
+           }
+        }
+      }
   };
 
   const handleKeyDown = (e) => {
@@ -148,7 +246,37 @@ function App() {
           onChange={handleFileUpload} 
         />
 
+        <div className="sidebar-tabs" style={{ display: 'flex', gap: '10px' }}>
+            <button style={{ flex: 1, padding: '10px', background: 'var(--primary)', color: 'white', borderRadius: '8px', fontWeight: 500 }} onClick={createNewChat}>+ Uus Vestlus</button>
+        </div>
+        
+        <div className="chat-history-list" style={{ maxHeight: '180px', overflowY: 'auto', borderBottom: '1px solid var(--glass-border)', paddingBottom: '16px' }}>
+          <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Ajalugu</h4>
+          {chats.map(c => (
+             <div 
+               key={c.id} 
+               onClick={() => loadChat(c.id)}
+               style={{ 
+                 padding: '8px 12px', 
+                 cursor: 'pointer', 
+                 borderRadius: '6px', 
+                 background: activeChatId === c.id ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
+                 color: activeChatId === c.id ? 'var(--primary)' : 'var(--text-secondary)',
+                 fontSize: '0.9rem',
+                 marginBottom: '4px',
+                 transition: 'all 0.2s'
+               }}
+             >
+               💬 {c.title}
+             </div>
+          ))}
+          {chats.length === 0 && (
+            <p style={{fontSize: '0.8rem', color: 'var(--text-placeholder)'}}>Pole varasemaid vestlusi.</p>
+          )}
+        </div>
+
         <div className="document-list">
+          <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Dokumendid</h4>
           {documents.map((doc, idx) => (
              <div className="document-item" key={idx}>
                <span className="document-name" title={doc}>{doc}</span>

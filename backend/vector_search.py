@@ -104,3 +104,83 @@ def generate_rag_response(query: str, history: list = None, tone: str = "Tavalin
         "sources": list(sources),
         "context_snippets": [{"filename": r[0], "text": r[1]} for r in results]
     }
+
+import json
+
+def generate_rag_stream(query: str, history: list = None, tone: str = "Tavaline"):
+    """
+    RAG Pipeline Stream:
+    Same as generate_rag_response but yields SSE JSON chunks.
+    """
+    results = query_vector_db(query)
+    if not results:
+        yield json.dumps({
+            "type": "metadata",
+            "sources": [],
+            "context_snippets": []
+        })
+        yield json.dumps({
+            "type": "chunk",
+            "text": "Vabandust, aga andmebaasist ei leitud teavet teie küsimusele vastamiseks."
+        })
+        return
+    
+    # Format Context
+    context_text = ""
+    sources = set()
+    for filename, chunk in results:
+        context_text += f"\n--- [Allikas: {filename}] ---\n{chunk}\n"
+        sources.add(filename)
+        
+    # Compile history
+    history_str = ""
+    if history:
+        recent_history = history[-5:]
+        history_str = "KONTEKSTI AJALUGU (EELNEV VESTLUS):\n"
+        for msg in recent_history:
+            role_label = "Kasutaja" if msg.get("role") == "user" else "Sina (AI)"
+            history_str += f"{role_label}: {msg.get('text')}\n"
+            
+    tone_instruction = ""
+    if tone == "Juriidiline":
+        tone_instruction = "Kasuta juriidilist, ametlikku ja väga detailset keelt (Use legal, formal, and highly detailed language)."
+    elif tone == "Lihtne keel":
+        tone_instruction = "Vasta väga lihtsas ja arusaadavas eesti keeles, vältides keerulisi termineid (Answer in very simple and understandable Estonian, avoiding complex terms)."
+    elif tone == "Lühikokkuvõte":
+        tone_instruction = "Anna väga lühike ja konkreetne vastus, kasuta vajadusel punktloendit (Give a very short and concise answer, use bullet points if necessary)."
+    else:
+        tone_instruction = "Vasta neutraalselt ja viisakalt (Answer neutrally and politely)."
+
+    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2)
+    prompt = f"""
+    You are an intelligent document search assistant (Nutikas dokumentide otsingusüsteem).
+    Your task is to answer the user's question based strictly on the provided Context. 
+    Do NOT invent facts, hallucinate, or rely on external knowledge.
+    If the answer cannot be confidently deduced from the Context, tell the user politely (in Estonian) that the document does not contain this information.
+    You MUST answer in Estonian language.
+    
+    TONE INSTRUCTION: {tone_instruction}
+
+    {history_str}
+
+    Context:
+    {context_text}
+    
+    USER QUESTION: {query}
+    
+    Vastus:
+    """
+    
+    # First yield metadata
+    yield json.dumps({
+        "type": "metadata",
+        "sources": list(sources),
+        "context_snippets": [{"filename": r[0], "text": r[1]} for r in results]
+    })
+    
+    # Then yield stream chunks
+    for chunk in llm.stream(prompt):
+        yield json.dumps({
+            "type": "chunk",
+            "text": chunk.content
+        })
