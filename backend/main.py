@@ -168,7 +168,17 @@ async def ask_question(request: QueryRequest):
         if request.chat_id:
             save_message(request.chat_id, "user", request.query)
 
-        response = generate_rag_response(request.query, request.history, request.tone)
+        try:
+            response = generate_rag_response(request.query, request.history, request.tone)
+        except Exception as api_err:
+            if "429" in str(api_err) or "RESOURCE_EXHAUSTED" in str(api_err):
+                response = {
+                    "answer": "⚠️ **Google API tasuta päringute limiit on täitunud** (20 päringut minutis). Palun oodake 60 sekundit ja proovige uuesti.",
+                    "sources": [],
+                    "context_snippets": []
+                }
+            else:
+                raise api_err
         
         if request.chat_id:
             save_message(request.chat_id, "bot", response["answer"], response["sources"], response["context_snippets"])
