@@ -134,6 +134,8 @@ def save_message(chat_id, role, text, sources=None, snippets=None):
 
 from vector_search import generate_rag_stream
 
+import asyncio
+
 @app.post("/ask/")
 async def ask_question(request: QueryRequest):
     """
@@ -157,12 +159,22 @@ async def ask_question(request: QueryRequest):
                 
                 # Yield SSE format
                 yield f"data: {data_str}\n\n"
+                # Force Uvicorn to flush the stream to the network immediately
+                await asyncio.sleep(0.02)
             
             # After stream finishes, save bot message
             save_message(request.chat_id, "bot", full_answer, sources, snippets)
             yield "data: [DONE]\n\n"
 
-        return StreamingResponse(event_generator(), media_type="text/event-stream")
+        return StreamingResponse(
+            event_generator(), 
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no"
+            }
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

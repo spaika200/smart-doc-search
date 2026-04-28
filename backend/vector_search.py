@@ -151,7 +151,7 @@ async def generate_rag_stream(query: str, history: list = None, tone: str = "Tav
     else:
         tone_instruction = "Vasta neutraalselt ja viisakalt (Answer neutrally and politely)."
 
-    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2)
+    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2, streaming=True)
     prompt = f"""
     You are an intelligent document search assistant (Nutikas dokumentide otsingusüsteem).
     Your task is to answer the user's question based strictly on the provided Context. 
