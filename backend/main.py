@@ -78,6 +78,28 @@ def create_chat(request: dict):
     finally:
         conn.close()
 
+from vector_search import generate_chat_title
+
+@app.post("/chats/{chat_id}/generate_title")
+def generate_and_update_title(chat_id: int, request: dict):
+    query = request.get("query", "")
+    if not query:
+        return {"title": "Uus vestlus"}
+        
+    title = generate_chat_title(query)
+    
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("UPDATE chats SET title = %s WHERE id = %s;", (title, chat_id))
+        conn.commit()
+        return {"title": title}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
 @app.get("/chats/")
 def list_chats():
     conn = get_db_connection()

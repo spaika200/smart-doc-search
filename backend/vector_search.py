@@ -104,3 +104,27 @@ def generate_rag_response(query: str, history: list = None, tone: str = "Tavalin
         "sources": list(sources),
         "context_snippets": [{"filename": r[0], "text": r[1]} for r in results]
     }
+
+def generate_chat_title(query: str) -> str:
+    """
+    Generates a 2-3 word title based on the first user query using Gemini.
+    """
+    try:
+        llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.3)
+        prompt = f"""
+        Loo järgnevale kasutaja päringule väga lühike, 2-3 sõnaline kokkuvõttev pealkiri eesti keeles.
+        Ära kasuta jutumärke, punkte ega lisateksti. Ainult pealkiri.
+        
+        Päring: {query}
+        
+        Pealkiri:
+        """
+        response = llm.invoke(prompt)
+        title = response.content.strip().replace('"', '').replace("'", "")
+        # Fallback if too long
+        if len(title) > 40:
+            return title[:37] + "..."
+        return title
+    except Exception as e:
+        print("Error generating title:", e)
+        return "Uus vestlus"

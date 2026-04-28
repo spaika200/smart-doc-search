@@ -137,10 +137,17 @@ function App() {
     try {
       let currentChatId = activeChatId;
       if (!currentChatId) {
-         const cRes = await axios.post(`${API_URL}/chats/`, { title: userQuery.substring(0, 30) });
+         const cRes = await axios.post(`${API_URL}/chats/`, { title: "Uus vestlus" });
          currentChatId = cRes.data.id;
          setActiveChatId(currentChatId);
          setChats(prev => [cRes.data, ...prev]);
+         
+         // Generate smart title in the background
+         axios.post(`${API_URL}/chats/${currentChatId}/generate_title`, { query: userQuery })
+           .then(titleRes => {
+              setChats(prev => prev.map(c => c.id === currentChatId ? { ...c, title: titleRes.data.title } : c));
+           })
+           .catch(e => console.error("Title generation failed", e));
       }
       
       const res = await axios.post(`${API_URL}/ask/`, { 
