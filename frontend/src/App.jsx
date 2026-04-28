@@ -65,6 +65,20 @@ function App() {
     }
   };
 
+  const deleteChat = async (chatId) => {
+    if (!window.confirm("Kas oled kindel, et soovid selle vestluse kustutada?")) return;
+    try {
+      await axios.delete(`${API_URL}/chats/${chatId}`);
+      setChats(prev => prev.filter(c => c.id !== chatId));
+      if (activeChatId === chatId) {
+        setActiveChatId(null);
+        setMessages([{ role: 'bot', text: 'Tere! Olen sinu nutikas dokumentide assistent. Kuidas saan aidata?', sources: [], context_snippets: [] }]);
+      }
+    } catch (err) {
+      console.error('Error deleting chat:', err);
+    }
+  };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -255,8 +269,8 @@ function App() {
           {chats.map(c => (
              <div 
                key={c.id} 
-               onClick={() => loadChat(c.id)}
                style={{ 
+                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                  padding: '8px 12px', 
                  cursor: 'pointer', 
                  borderRadius: '6px', 
@@ -267,7 +281,20 @@ function App() {
                  transition: 'all 0.2s'
                }}
              >
-               💬 {c.title}
+               <span onClick={() => loadChat(c.id)} style={{ flex: 1 }}>💬 {c.title}</span>
+               <button 
+                 onClick={(e) => { e.stopPropagation(); deleteChat(c.id); }} 
+                 style={{
+                    background: 'transparent', border: 'none', color: 'var(--text-secondary)',
+                    cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center',
+                    opacity: 0.6
+                 }}
+                 title="Kustuta vestlus"
+                 onMouseOver={(e) => e.currentTarget.style.color = 'red'}
+                 onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+               >
+                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+               </button>
              </div>
           ))}
           {chats.length === 0 && (

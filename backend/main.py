@@ -89,6 +89,20 @@ def list_chats():
     finally:
         conn.close()
 
+@app.delete("/chats/{chat_id}")
+def delete_chat(chat_id: int):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM chats WHERE id = %s;", (chat_id,))
+        conn.commit()
+        return {"message": "Vestlus kustutatud"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
 @app.get("/chats/{chat_id}/messages")
 def get_chat_messages(chat_id: int):
     conn = get_db_connection()
@@ -129,11 +143,11 @@ async def ask_question(request: QueryRequest):
         # Save user message immediately if chat_id exists
         save_message(request.chat_id, "user", request.query)
 
-        def event_generator():
+        async def event_generator():
             full_answer = ""
             sources = []
             snippets = []
-            for data_str in generate_rag_stream(request.query, request.history, request.tone):
+            async for data_str in generate_rag_stream(request.query, request.history, request.tone):
                 data = json.loads(data_str)
                 if data["type"] == "metadata":
                     sources = data.get("sources", [])

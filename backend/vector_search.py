@@ -107,10 +107,10 @@ def generate_rag_response(query: str, history: list = None, tone: str = "Tavalin
 
 import json
 
-def generate_rag_stream(query: str, history: list = None, tone: str = "Tavaline"):
+async def generate_rag_stream(query: str, history: list = None, tone: str = "Tavaline"):
     """
     RAG Pipeline Stream:
-    Same as generate_rag_response but yields SSE JSON chunks.
+    Same as generate_rag_response but yields SSE JSON chunks asynchronously.
     """
     results = query_vector_db(query)
     if not results:
@@ -178,8 +178,8 @@ def generate_rag_stream(query: str, history: list = None, tone: str = "Tavaline"
         "context_snippets": [{"filename": r[0], "text": r[1]} for r in results]
     })
     
-    # Then yield stream chunks
-    for chunk in llm.stream(prompt):
+    # Then yield stream chunks asynchronously
+    async for chunk in llm.astream(prompt):
         yield json.dumps({
             "type": "chunk",
             "text": chunk.content
