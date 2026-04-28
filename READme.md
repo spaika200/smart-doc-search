@@ -6,6 +6,17 @@ This is a Full-stack Retrieval-Augmented Generation (RAG) system built to parse 
 
 ---
 
+## 🌟 Key Features
+- **Local Document Support:** Upload `.pdf`, `.docx`, and `.txt` files directly into a local PostgreSQL vector database.
+- **Enterprise-Grade RAG:** The AI (Gemini 2.5 Flash) answers questions *strictly* based on uploaded documents. If the document doesn't contain the answer, it refuses to hallucinate.
+- **Source Verification:** Every answer provides exact clickable source links (📄) opening a modal that shows the exact text snippet the AI read.
+- **Persistent Chat History:** Seamlessly switch between multiple conversations using the sidebar. All chat history is saved in PostgreSQL.
+- **Dynamic Typewriter UI:** A beautiful, responsive glassmorphism interface featuring instant typewriter-style text generation.
+- **Tone Control:** Toggle between different AI speaking styles ("Tavaline", "Lihtne keel", "Lühikokkuvõte", "Juriidiline").
+- **API Rate Limit Protection:** Built-in graceful error handling to protect against Gemini API Free Tier limits.
+
+---
+
 ## 🚀 Tech Stack & AI Models
 
 ### AI Architecture (Powered by Google Gemini)
