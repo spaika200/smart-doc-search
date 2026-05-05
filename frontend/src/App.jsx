@@ -203,7 +203,6 @@ function App() {
       
       const { answer, sources, context_snippets } = res.data;
       
-      // Start Typewriter Effect
       setIsTyping(false);
       setMessages(prev => [...prev, { role: 'bot', text: '', sources, context_snippets }]);
       
@@ -239,7 +238,6 @@ function App() {
   };
 
   const openSnippetModal = (filename, snippets) => {
-    // Find the specific snippet text from the backend's returned array
     const snippetData = snippets?.find(s => s.filename === filename);
     if (snippetData) {
       setModalSnippet(snippetData);
@@ -249,7 +247,6 @@ function App() {
   return (
     <div className="app-container">
       
-      {/* Sidebar: Document Management */}
       <aside className="sidebar glass-panel">
         <div className="sidebar-header">
           <h2>Tark Otsing</h2>
@@ -393,7 +390,6 @@ function App() {
         </div>
       </aside>
 
-      {/* Main Chat Interface */}
       <main className="chat-container glass-panel">
         <div className="chat-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3>Vestlus</h3>
@@ -493,7 +489,6 @@ function App() {
         </div>
       </main>
 
-      {/* Snippet Modal Overlay */}
       {modalSnippet && (
         <div className="modal-overlay" onClick={() => setModalSnippet(null)}>
           <div className="modal-content glass-panel" onClick={e => e.stopPropagation()}>
@@ -508,7 +503,6 @@ function App() {
         </div>
       )}
 
-      {/* Toast Notifications */}
       <div className="toast-container">
         {toasts.map(toast => (
           <div key={toast.id} className={`toast-message ${toast.type}`}>

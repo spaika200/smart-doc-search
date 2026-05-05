@@ -51,14 +51,14 @@ def generate_rag_response(query: str, history: list = None, tone: str = "Tavalin
             "context_snippets": []
         }
     
-    # 2. Format Context
+    # Format Context
     context_text = ""
     sources = set()
     for filename, chunk in results:
         context_text += f"\n--- [Allikas: {filename}] ---\n{chunk}\n"
         sources.add(filename)
         
-    # 3. Compile history mapping
+    # Compile history mapping
     history_str = ""
     if history:
         recent_history = history[-5:]
