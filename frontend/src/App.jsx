@@ -17,6 +17,15 @@ function App() {
   const [activeChatId, setActiveChatId] = useState(null);
   const [editingChatId, setEditingChatId] = useState(null);
   const [editingTitle, setEditingTitle] = useState('');
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = (message, type = 'info') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 3000);
+  };
 
   const SUGGESTED_CHIPS = ["Millised dokumendid on andmebaasis?", "Tee lühikokkuvõte", "Kuidas see süsteem töötab?"];
   
@@ -146,10 +155,11 @@ function App() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       await fetchDocuments();
-      setMessages(prev => [...prev, { role: 'bot', text: `Fail **${file.name}** edukalt lisatud!` }]);
+      showToast(`Fail ${file.name} edukalt lisatud!`, 'success');
+      setMessages(prev => [...prev, { role: 'bot', text: `Fail **${file.name}** edukalt lisatud andmebaasi!` }]);
     } catch (err) {
       console.error('Upload failed', err);
-      alert('Faili üleslaadimine ebaõnnestus.');
+      showToast('Faili üleslaadimine ebaõnnestus.', 'error');
     } finally {
       setIsUploading(false);
       e.target.value = null; 
@@ -497,6 +507,15 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Toast Notifications */}
+      <div className="toast-container">
+        {toasts.map(toast => (
+          <div key={toast.id} className={`toast-message ${toast.type}`}>
+            {toast.message}
+          </div>
+        ))}
+      </div>
 
     </div>
   );
