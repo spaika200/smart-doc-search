@@ -270,17 +270,27 @@ function App() {
 
         <div className="document-list">
           <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Dokumendid</h4>
-          {documents.map((doc, idx) => (
-             <div className="document-item" key={idx}>
-               <span className="document-name" title={doc}>{doc}</span>
-               <button className="btn-delete" onClick={() => handleDelete(doc)}>
-                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                   <polyline points="3 6 5 6 21 6"></polyline>
-                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                 </svg>
-               </button>
-             </div>
-          ))}
+          {documents.map((doc, idx) => {
+             const filename = typeof doc === 'string' ? doc : doc.filename;
+             const chunkCount = doc.chunk_count;
+             
+             return (
+               <div className="document-item" key={idx}>
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden' }}>
+                   <span className="document-name" title={filename}>{filename}</span>
+                   {chunkCount && (
+                     <span style={{fontSize: '0.75rem', color: 'var(--text-placeholder)'}}>{chunkCount} lõiku</span>
+                   )}
+                 </div>
+                 <button className="btn-delete" onClick={() => handleDelete(filename)}>
+                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                     <polyline points="3 6 5 6 21 6"></polyline>
+                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                   </svg>
+                 </button>
+               </div>
+             )
+          })}
           {documents.length === 0 && (
             <p style={{textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-placeholder)', marginTop: '20px'}}>
               Pole veel üles laaditud dokumente.
