@@ -15,6 +15,8 @@ function App() {
   const [selectedTone, setSelectedTone] = useState('Tavaline');
   const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
+  const [editingChatId, setEditingChatId] = useState(null);
+  const [editingTitle, setEditingTitle] = useState('');
 
   const SUGGESTED_CHIPS = ["Millised dokumendid on andmebaasis?", "Tee lühikokkuvõte", "Kuidas see süsteem töötab?"];
   
@@ -76,6 +78,21 @@ function App() {
       }
     } catch (err) {
       console.error('Error deleting chat:', err);
+    }
+  };
+
+  const handleRenameChat = async (chatId) => {
+    if (!editingTitle.trim()) {
+      setEditingChatId(null);
+      return;
+    }
+    try {
+      const res = await axios.put(`${API_URL}/chats/${chatId}`, { title: editingTitle.trim() });
+      setChats(prev => prev.map(c => c.id === chatId ? { ...c, title: res.data.title } : c));
+    } catch (err) {
+      console.error('Error renaming chat:', err);
+    } finally {
+      setEditingChatId(null);
     }
   };
 
@@ -246,21 +263,64 @@ function App() {
                  marginBottom: '4px',
                  transition: 'all 0.2s'
                }}
+               onClick={() => { if (editingChatId !== c.id) loadChat(c.id); }}
              >
-               <span onClick={() => loadChat(c.id)} style={{ flex: 1 }}>💬 {c.title}</span>
-               <button 
-                 onClick={(e) => { e.stopPropagation(); deleteChat(c.id); }} 
-                 style={{
-                    background: 'transparent', border: 'none', color: 'var(--text-secondary)',
-                    cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center',
-                    opacity: 0.6
-                 }}
-                 title="Kustuta vestlus"
-                 onMouseOver={(e) => e.currentTarget.style.color = 'red'}
-                 onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
-               >
-                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-               </button>
+               {editingChatId === c.id ? (
+                 <input 
+                   type="text" 
+                   value={editingTitle} 
+                   onChange={(e) => setEditingTitle(e.target.value)}
+                   onClick={(e) => e.stopPropagation()}
+                   onKeyDown={(e) => {
+                     if (e.key === 'Enter') handleRenameChat(c.id);
+                     if (e.key === 'Escape') setEditingChatId(null);
+                   }}
+                   onBlur={() => handleRenameChat(c.id)}
+                   autoFocus
+                   style={{
+                     flex: 1, background: 'rgba(0,0,0,0.2)', border: '1px solid var(--primary)', 
+                     color: 'white', padding: '4px 8px', borderRadius: '4px', outline: 'none',
+                     fontSize: '0.9rem', marginRight: '8px'
+                   }}
+                 />
+               ) : (
+                 <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>💬 {c.title}</span>
+               )}
+
+               {editingChatId !== c.id && (
+                 <div style={{ display: 'flex', gap: '4px' }}>
+                   <button 
+                     onClick={(e) => { 
+                       e.stopPropagation(); 
+                       setEditingChatId(c.id); 
+                       setEditingTitle(c.title); 
+                     }} 
+                     style={{
+                        background: 'transparent', border: 'none', color: 'var(--text-secondary)',
+                        cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center',
+                        opacity: 0.6
+                     }}
+                     title="Nimeta ümber"
+                     onMouseOver={(e) => e.currentTarget.style.color = 'var(--primary)'}
+                     onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+                   >
+                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                   </button>
+                   <button 
+                     onClick={(e) => { e.stopPropagation(); deleteChat(c.id); }} 
+                     style={{
+                        background: 'transparent', border: 'none', color: 'var(--text-secondary)',
+                        cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center',
+                        opacity: 0.6
+                     }}
+                     title="Kustuta vestlus"
+                     onMouseOver={(e) => e.currentTarget.style.color = 'red'}
+                     onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+                   >
+                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                   </button>
+                 </div>
+               )}
              </div>
           ))}
           {chats.length === 0 && (
