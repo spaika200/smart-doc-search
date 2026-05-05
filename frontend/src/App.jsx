@@ -96,6 +96,30 @@ function App() {
     }
   };
 
+  const handleExportChat = () => {
+    if (messages.length === 0) return;
+    let exportText = "Targa Otsingu Vestlus\n";
+    exportText += "======================\n\n";
+    
+    messages.forEach(m => {
+      exportText += `${m.role === 'user' ? 'Mina' : 'AI'}:\n${m.text}\n`;
+      if (m.sources && m.sources.length > 0) {
+        exportText += `[Allikad: ${m.sources.join(', ')}]\n`;
+      }
+      exportText += "\n----------------------\n\n";
+    });
+    
+    const blob = new Blob([exportText], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Vestlus_${new Date().toISOString().slice(0,10)}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -361,8 +385,12 @@ function App() {
 
       {/* Main Chat Interface */}
       <main className="chat-container glass-panel">
-        <div className="chat-header">
+        <div className="chat-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3>Vestlus</h3>
+          <button onClick={handleExportChat} className="btn-copy" style={{ marginTop: 0, padding: '6px 12px', background: 'rgba(255,255,255,0.05)' }} title="Ekspordi vestlus">
+             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+             Ekspordi (.txt)
+          </button>
         </div>
 
         <div className="chat-messages">
