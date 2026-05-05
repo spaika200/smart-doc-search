@@ -166,16 +166,36 @@ async def ask_question(request: QueryRequest):
 @app.get("/documents/")
 def list_documents():
     """
-    Returns a list of all distinct filenames from the database.
+    Returns a list of all distinct filenames from the database with their chunk counts.
     """
     conn = get_db_connection()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT DISTINCT filename FROM document_chunks;")
+        cur.execute("SELECT filename, COUNT(*) FROM document_chunks GROUP BY filename ORDER BY filename;")
         results = cur.fetchall()
-        documents = [row[0] for row in results]
+        documents = [{"filename": row[0], "chunk_count": row[1]} for row in results]
         return {"documents": documents}
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+@app.put("/chats/{chat_id}")
+def update_chat_title(chat_id: int, request: dict):
+    title = request.get("title")
+    if not title:
+        raise HTTPException(status_code=400, detail="Title is required")
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("UPDATE chats SET title = %s WHERE id = %s RETURNING id, title;", (title, chat_id))
+        updated = cur.fetchone()
+        conn.commit()
+        if not updated:
+            raise HTTPException(status_code=404, detail="Chat not found")
+        return {"id": updated[0], "title": updated[1]}
+    except Exception as e:
+        conn.rollback()
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()
