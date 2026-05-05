@@ -35,6 +35,22 @@ class QueryRequest(BaseModel):
 def read_root():
     return {"message": "Welcome to the Smart Document Search API! The server is running."}
 
+@app.get("/health/")
+def health_check():
+    """Checks if the database and API are healthy."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT 1;")
+        cur.fetchone()
+        return {"status": "online"}
+    except Exception as e:
+        raise HTTPException(status_code=503, detail="Database connection failed")
+    finally:
+        if conn:
+            conn.close()
+
 @app.post("/upload/")
 async def upload_document(file: UploadFile = File(...)):
     temp_file_path = f"temp_{file.filename}"
