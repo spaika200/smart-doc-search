@@ -13,6 +13,9 @@ This is a Full-stack Retrieval-Augmented Generation (RAG) system built to parse 
 - **Persistent Chat History:** Seamlessly switch between multiple conversations using the sidebar. All chat history is saved in PostgreSQL.
 - **Dynamic Typewriter UI:** A beautiful, responsive glassmorphism interface featuring instant typewriter-style text generation.
 - **Tone Control:** Toggle between different AI speaking styles ("Tavaline", "Lihtne keel", "Lühikokkuvõte", "Juriidiline").
+- **Chat Management & Export:** Manually rename chats for better organization and export entire conversations to `.txt` files.
+- **System Health & Metadata:** Real-time visual status indicator for database connectivity, plus transparent metadata showing exact document chunk counts.
+- **Premium UX:** Custom animated toast notifications replacing native browser alerts for a flawless user experience.
 - **API Rate Limit Protection:** Built-in graceful error handling to protect against Gemini API Free Tier limits.
 
 ---
@@ -63,23 +66,24 @@ POSTGRES_PORT=5432
 ```
 *(Note: You can generate a free Gemini API key from Google AI Studio if you don't have one).*
 
-### 2. Database (Docker)
-Ensure your PostgreSQL `pgvector` container is running in Docker Desktop and ports are mapped to `5432`.
-Run the database initializer script to create the necessary tables:
-```bash
-cd backend
-python database.py
-```
-
-### 3. Backend Installation (FastAPI)
-Navigate to the backend directory, initialize the environment, and install all libraries directly from `requirements.txt`:
+### 2. Backend Installation (FastAPI & Libraries)
+Navigate to the backend directory, initialize the virtual environment, and install all libraries directly from `requirements.txt`:
 ```bash
 cd backend
 python -m venv venv 
 .\venv\Scripts\activate 
 pip install -r requirements.txt
 ```
-To run the server:
+
+### 3. Database Initialization (Docker)
+Ensure your PostgreSQL `pgvector` container is running in Docker Desktop and ports are mapped to `5432`.
+Because you just installed the required libraries in Step 2, you can now run the database initializer script to create the necessary tables:
+```bash
+python database.py
+```
+
+### 4. Run the Server
+While still inside the `backend` folder with your virtual environment activated, start the API:
 ```bash
 uvicorn main:app --reload
 ```
