@@ -12,6 +12,7 @@ See projekt on täislahendusena loodud **RAG (Retrieval-Augmented Generation)** 
 Süsteem sisaldab professionaalsel tasemel kasutajaliidest (Glassmorphism) ja ettevõtte tasemel andmebaasilahendust:
 
 - 📄 **Dokumentide tugi:** `.pdf`, `.docx` ja `.txt` failide üleslaadimine lokaalsesse PostgreSQL vektorandmebaasi.
+- 🛡️ **Hallutsinatsioonide Vältimine (Enterprise-Grade RAG):** Süsteem on ehitatud vastama *ainult* üleslaaditud dokumentide põhjal. Kui vastust ei leidu, keeldub AI seda välja mõtlemast.
 - 🎯 **Täpne Allikaviitamine:** AI vastuste juures on klikitavad allikaviited (📄), mis avavad modaali näidates täpset teksti, mida tehisintellekt luges.
 - 💬 **Dünaamiline Vestluse Ajalugu:** Kõik vestlused salvestatakse andmebaasi. Vestlusi saab ümber nimetada ja kustutada.
 - 🌓 **Tume / Hele Režiim (Dark/Light Mode):** Kasutajaliides toetab täielikult teemade vahetamist, salvestades eelistuse brauseri mällu.
@@ -20,6 +21,7 @@ Süsteem sisaldab professionaalsel tasemel kasutajaliidest (Glassmorphism) ja et
 - 🎭 **Tooni Kontroll:** Võimalus valida AI vastamisstiili ("Tavaline", "Lihtne keel", "Lühikokkuvõte", "Juriidiline").
 - 💾 **Eksportimine:** Kogu vestlus on võimalik alla laadida `.txt` failina.
 - 🟢 **Süsteemi Tervise Jälgimine:** Visuaalne indikaator näitab reaalajas, kas andmebaasi ühendus on aktiivne.
+- ⚡ **API Limiidikaitsed:** Sisseehitatud veahaldus, mis kaitseb süsteemi Gemini API tasuta paketi päringulimiitide ületamise eest, pakkudes kasutajale viisakat veateadet.
 
 ---
 
