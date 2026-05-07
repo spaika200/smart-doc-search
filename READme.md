@@ -1,98 +1,96 @@
-# Dokumentide Intelligentne Otsingusüsteem (Smart Document Search)
+# 🎓 Dokumentide Intelligentne Otsingusüsteem (Smart Document Search)
 
-Idee ja Lõputöö: Artjom Aristov & Nikita Žuravljov
+**Lõputöö Autorid:** Artjom Aristov & Nikita Žuravljov  
+**Kool:** Ida-Virumaa Kutsehariduskeskus (JPTV22)  
 
-This is a Full-stack Retrieval-Augmented Generation (RAG) system built to parse physical documents into vector embeddings and reliably answer queries strictly using the provided documents.
-
----
-
-## 🌟 Key Features
-- **Local Document Support:** Upload `.pdf`, `.docx`, and `.txt` files directly into a local PostgreSQL vector database.
-- **Enterprise-Grade RAG:** The AI (Gemini 2.5 Flash) answers questions *strictly* based on uploaded documents. If the document doesn't contain the answer, it refuses to hallucinate.
-- **Source Verification:** Every answer provides exact clickable source links (📄) opening a modal that shows the exact text snippet the AI read.
-- **Persistent Chat History:** Seamlessly switch between multiple conversations using the sidebar. All chat history is saved in PostgreSQL.
-- **Dynamic Typewriter UI:** A beautiful, responsive glassmorphism interface featuring instant typewriter-style text generation.
-- **Tone Control:** Toggle between different AI speaking styles ("Tavaline", "Lihtne keel", "Lühikokkuvõte", "Juriidiline").
-- **Chat Management & Export:** Manually rename chats for better organization and export entire conversations to `.txt` files.
-- **System Health & Metadata:** Real-time visual status indicator for database connectivity, plus transparent metadata showing exact document chunk counts.
-- **Premium UX:** Custom animated toast notifications replacing native browser alerts for a flawless user experience.
-- **API Rate Limit Protection:** Built-in graceful error handling to protect against Gemini API Free Tier limits.
+See projekt on täislahendusena loodud **RAG (Retrieval-Augmented Generation)** süsteem. Rakendus võimaldab kasutajal üles laadida dokumente, mis muudetakse vektorkujule, ning seejärel esitada nende põhjal küsimusi. Süsteem on ehitatud nii, et AI (Gemini) vastab küsimustele **ainult** üleslaaditud dokumentide põhjal, välistades hallutsinatsioonid.
 
 ---
 
-## 🚀 Tech Stack & AI Models
+## 🌟 Süsteemi Võimalused ja Uuendused
 
-### AI Architecture (Powered by Google Gemini)
-* **Embedding Model:** `models/gemini-embedding-001` 
-  * Converts the `.pdf`, `.docx`, and `.txt` contents into mathematical vectors (3072 dimensions used).
-* **Generation Model (LLM):** `models/gemini-2.5-flash`
-  * This is the brain answering the questions. It reads the top-matched vector snippets from the database and constructs the final Estonian response without hallucinating outside knowledge.
+Süsteem sisaldab professionaalsel tasemel kasutajaliidest (Glassmorphism) ja ettevõtte tasemel andmebaasilahendust:
 
-### Frameworks Setup
-* **Backend:** `FastAPI` (Python)
-* **Frontend:** `React` with `Vite` (JavaScript, Vanilla CSS Glassmorphism UI)
-* **Database:** `PostgreSQL` via Docker with the `pgvector` extension.
-
----
-
-## 🛠️ Viewing the Database (Docker DB)
-
-All document embeddings are stored inside your local Docker PostgreSQL container inside the `document_chunks` table.
-
-**How to inspect the database:**
-1. You can use any SQL graphical client like **DBeaver**, **pgAdmin**, or **DataGrip**.
-2. Connect using the credentials specified in your `backend/.env` file:
-   * **Host:** `localhost`
-   * **Port:** `5432`
-   * **Database Name:** `smart_search`
-   * **Username:** `user`
-   * **Password:** `password`
-3. Expand your schemas and open the `document_chunks` table. You will physically see the `filename` string, the `chunk_text`, and the massive 3072-digit `embedding` array for each paragraph loaded!
+- 📄 **Dokumentide tugi:** `.pdf`, `.docx` ja `.txt` failide üleslaadimine lokaalsesse PostgreSQL vektorandmebaasi.
+- 🎯 **Täpne Allikaviitamine:** AI vastuste juures on klikitavad allikaviited (📄), mis avavad modaali näidates täpset teksti, mida tehisintellekt luges.
+- 💬 **Dünaamiline Vestluse Ajalugu:** Kõik vestlused salvestatakse andmebaasi. Vestlusi saab ümber nimetada ja kustutada.
+- 🌓 **Tume / Hele Režiim (Dark/Light Mode):** Kasutajaliides toetab täielikult teemade vahetamist, salvestades eelistuse brauseri mällu.
+- 📊 **Reaalajas Üleslaadimise Indikaator:** Suurte dokumentide puhul kuvatakse reaalajas edenemisriba (0-100%).
+- ✨ **Animatsioonid ja Markdown:** Markdowni tugi (tabelid, koodiplokid, tsitaadid) ning "põrkavate punktide" (bouncing dots) animatsioon, kui AI genereerib vastust.
+- 🎭 **Tooni Kontroll:** Võimalus valida AI vastamisstiili ("Tavaline", "Lihtne keel", "Lühikokkuvõte", "Juriidiline").
+- 💾 **Eksportimine:** Kogu vestlus on võimalik alla laadida `.txt` failina.
+- 🟢 **Süsteemi Tervise Jälgimine:** Visuaalne indikaator näitab reaalajas, kas andmebaasi ühendus on aktiivne.
 
 ---
 
-## 📦 Installation & Setup Guide
+## 🚀 Tehnoloogiad ja AI Mudelid
 
-### 1. Environment Variables (.env)
-Because secret keys are hidden by Git (`.gitignore`), anyone downloading this project must create their own `.env` file before starting.
-Inside the `backend` folder, create a new file named exactly `.env` and paste the following inside:
+Süsteem on jaotatud kolmeks peamiseks osaks:
+
+### 1. AI Arhitektuur (Google Gemini API)
+* **Vektori Mudel:** `models/gemini-embedding-001` (Muudab dokumendi teksti 3072-dimensionaalseks vektoriks).
+* **Generatiivne Mudel:** `models/gemini-2.5-flash` (Analüüsib vektoreid ja genereerib eestikeelse vastuse).
+
+### 2. Back-end (Python & FastAPI)
+* API päringute töötlemine.
+* Dokumentide parsijad (`pypdf`, `python-docx`).
+* LangChain teksti tükeldamiseks ja vektoriseerimiseks.
+
+### 3. Front-end (React & Vite)
+* SPA (Single Page Application) arhitektuur.
+* Vanilla CSS Glassmorphism stiil koos Light/Dark režiimiga.
+
+### 4. Andmebaas (PostgreSQL & pgvector)
+* Lokaalne Docker konteiner, mis kasutab `pgvector` laiendust vektorotsingu (koosinussarnasuse) teostamiseks.
+
+---
+
+## 📦 Paigaldamise ja Käivitamise Juhend (Komisjonile)
+
+Süsteemi testimiseks lokaalses masinas palun jälgige järgnevaid samme:
+
+### 1. Keskkonnamuutujad (.env)
+Loo `backend` kausta fail nimega `.env` ja lisa sinna järgmised andmed (API võti asendage reaalse võtmega):
 ```env
-GOOGLE_API_KEY=your_gemini_api_key_here
+GOOGLE_API_KEY=sinu_gemini_api_võti_siia
 POSTGRES_USER=user
 POSTGRES_PASSWORD=password
 POSTGRES_DB=smart_search
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 ```
-*(Note: You can generate a free Gemini API key from Google AI Studio if you don't have one).*
 
-### 2. Backend Installation (FastAPI & Libraries)
-Navigate to the backend directory, initialize the virtual environment, and install all libraries directly from `requirements.txt`:
+### 2. Andmebaasi Käivitamine (Docker)
+Veenduge, et Docker on käivitatud ning PostgreSQL konteiner jookseb pordil `5432`.
+Loo vajalikud tabelid käivitades `backend` kaustas skript:
 ```bash
 cd backend
-python -m venv venv 
-.\venv\Scripts\activate 
-pip install -r requirements.txt
-```
-
-### 3. Database Initialization (Docker)
-Ensure your PostgreSQL `pgvector` container is running in Docker Desktop and ports are mapped to `5432`.
-Because you just installed the required libraries in Step 2, you can now run the database initializer script to create the necessary tables:
-```bash
 python database.py
 ```
 
-### 4. Run the Server
-While still inside the `backend` folder with your virtual environment activated, start the API:
+### 3. Backend-i Käivitamine (FastAPI)
+Käivitage virtuaalkeskkond, installeerige sõltuvused ja pange server tööle:
 ```bash
+# Sõltuvuste installeerimine (esimesel korral)
+pip install -r requirements.txt
+
+# Serveri käivitamine
 uvicorn main:app --reload
 ```
 
-### 4. Frontend Installation (React)
-Open a new terminal and install the frontend packages.
+### 4. Frontend-i Käivitamine (React)
+Avage uus terminali aken ja liikuge `frontend` kausta:
 ```bash
 cd frontend
-npm install 
+npm install
 npm run dev
 ```
-Open `http://localhost:5173` in your browser.
+Rakendus on nüüd kättesaadav brauseris aadressil: **http://localhost:5173**
+
+---
+
+## 🛠️ Andmebaasi Struktuur
+Kui soovite süsteemi sisu visuaalselt kontrollida (nt DBeaver või pgAdmin abil):
+* **`document_chunks` tabel:** Sisaldab failinime, teksti ja 3072-kohalist vektorit.
+* **`chats` tabel:** Sisaldab vestluste ajalugu ja pealkirju.
+* **`chat_messages` tabel:** Sisaldab kasutaja ja AI sõnumeid, sealhulgas allikaviidete JSON faile.
