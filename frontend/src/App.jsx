@@ -480,9 +480,13 @@ function App() {
           {isTyping && (
              <div className="message bot">
                 <div className="avatar bot">AI</div>
-                <div className="message-bubble" style={{display: 'flex', gap: '4px', alignItems: 'center'}}>
-                   <span className="loader-spinner" style={{width: '12px', height: '12px', borderTopColor: 'var(--text-secondary)'}}></span> 
-                   <span style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginLeft: '8px'}}>Otsib ja kirjutab...</span>
+                <div className="message-bubble" style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
+                   <div className="typing-dots">
+                     <div className="dot"></div>
+                     <div className="dot"></div>
+                     <div className="dot"></div>
+                   </div>
+                   <span style={{fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic'}}>Otsib ja kirjutab...</span>
                 </div>
              </div>
           )}
