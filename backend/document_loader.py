@@ -1,6 +1,22 @@
 import os
 import docx
-from pdf_reader import extract_text_from_pdf
+from pypdf import PdfReader
+
+def extract_text_from_pdf(pdf_path: str) -> str:
+    if not os.path.exists(pdf_path):
+        return ""
+
+    print(f"Opening '{pdf_path}'...")
+    reader = PdfReader(pdf_path)
+    extracted_text = ""
+    
+    for i, page in enumerate(reader.pages):
+        text = page.extract_text()
+        if text:
+            extracted_text += text + "\n"
+        print(f"Processed page {i + 1}/{len(reader.pages)}")
+            
+    return extracted_text
 
 def extract_text_from_file(file_path: str, filename: str) -> str:
     """
