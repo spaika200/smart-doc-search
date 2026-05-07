@@ -50,7 +50,7 @@ Süsteem on jaotatud kolmeks peamiseks osaks:
 Süsteemi testimiseks lokaalses masinas palun jälgige järgnevaid samme:
 
 ### 1. Keskkonnamuutujad (.env)
-Loo `backend` kausta fail nimega `.env` ja lisa sinna järgmised andmed (API võti asendage reaalse võtmega):
+Loo `backend` kausta fail nimega `.env` ja lisa sinna järgmised andmed:
 ```env
 GOOGLE_API_KEY=sinu_gemini_api_võti_siia
 POSTGRES_USER=user
@@ -59,22 +59,27 @@ POSTGRES_DB=smart_search
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 ```
+*(Märkus: Tasuta Gemini API võtme saate genereerida aadressilt: [Google AI Studio](https://aistudio.google.com/app/apikey))*
 
-### 2. Andmebaasi Käivitamine (Docker)
-Veenduge, et Docker on käivitatud ning PostgreSQL konteiner jookseb pordil `5432`.
-Loo vajalikud tabelid käivitades `backend` kaustas skript:
+### 2. Backend-i Paigaldus (Python & Sõltuvused)
+Liigu `backend` kausta, loo virtuaalkeskkond (venv) ja installeeri vajalikud teegid:
 ```bash
 cd backend
+python -m venv venv 
+.\venv\Scripts\activate 
+pip install -r requirements.txt
+```
+
+### 3. Andmebaasi Initsialiseerimine (Docker)
+Veendu, et sinu PostgreSQL `pgvector` konteiner jookseb Dockeris (pordil 5432).
+Kuna sõltuvused (sh `psycopg2`) on nüüd installeeritud, saad luua vajalikud andmebaasi tabelid:
+```bash
 python database.py
 ```
 
-### 3. Backend-i Käivitamine (FastAPI)
-Käivitage virtuaalkeskkond, installeerige sõltuvused ja pange server tööle:
+### 4. Serveri Käivitamine (FastAPI)
+Veendu, et oled `backend` kaustas ja virtuaalkeskkond (`venv`) on aktiivne, seejärel käivita API:
 ```bash
-# Sõltuvuste installeerimine (esimesel korral)
-pip install -r requirements.txt
-
-# Serveri käivitamine
 uvicorn main:app --reload
 ```
 
