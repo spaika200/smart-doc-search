@@ -14,3 +14,6 @@ backend/__pycache__/
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Documents
+*.docx
