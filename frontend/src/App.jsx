@@ -20,6 +20,18 @@ function App() {
   const [editingTitle, setEditingTitle] = useState('');
   const [toasts, setToasts] = useState([]);
   const [systemStatus, setSystemStatus] = useState('checking'); // online, offline, checking
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('theme') || 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+  
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
 
   const showToast = (message, type = 'info') => {
     const id = Date.now();
@@ -275,16 +287,21 @@ function App() {
           <h2>Tark Otsing</h2>
           <p>Dokumentide intelligentne otsingusüsteem</p>
           
-          <div style={{ position: 'absolute', top: '4px', right: '0', display: 'flex', alignItems: 'center', gap: '6px' }} title={systemStatus === 'online' ? "Süsteem ja andmebaas töötavad" : "Ühenduse viga"}>
-            <span style={{ fontSize: '0.65rem', color: 'var(--text-placeholder)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              {systemStatus === 'online' ? 'Online' : systemStatus === 'offline' ? 'Offline' : 'Ootab'}
-            </span>
-            <div style={{
-              width: '8px', height: '8px', borderRadius: '50%',
-              background: systemStatus === 'online' ? '#10b981' : systemStatus === 'offline' ? '#ef4444' : '#f59e0b',
-              boxShadow: systemStatus === 'online' ? '0 0 8px #10b981' : systemStatus === 'offline' ? '0 0 8px #ef4444' : 'none',
-              animation: systemStatus === 'online' ? 'pulse 2s infinite' : 'none'
-            }} />
+          <div style={{ position: 'absolute', top: '4px', right: '0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button onClick={toggleTheme} style={{background: 'transparent', color: 'var(--text-secondary)', padding: '4px', display: 'flex', alignItems: 'center', borderRadius: '50%', border: '1px solid var(--glass-border)'}} title={theme === 'dark' ? "Hele režiim" : "Tume režiim"}>
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} title={systemStatus === 'online' ? "Süsteem ja andmebaas töötavad" : "Ühenduse viga"}>
+              <span style={{ fontSize: '0.65rem', color: 'var(--text-placeholder)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                {systemStatus === 'online' ? 'Online' : systemStatus === 'offline' ? 'Offline' : 'Ootab'}
+              </span>
+              <div style={{
+                width: '8px', height: '8px', borderRadius: '50%',
+                background: systemStatus === 'online' ? '#10b981' : systemStatus === 'offline' ? '#ef4444' : '#f59e0b',
+                boxShadow: systemStatus === 'online' ? '0 0 8px #10b981' : systemStatus === 'offline' ? '0 0 8px #ef4444' : 'none',
+                animation: systemStatus === 'online' ? 'pulse 2s infinite' : 'none'
+              }} />
+            </div>
           </div>
         </div>
 

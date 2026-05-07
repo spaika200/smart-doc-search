@@ -22,6 +22,23 @@
   --success: #10b981;
 }
 
+[data-theme='light'] {
+  --bg-main: #f8fafc;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --bg-card-hover: rgba(241, 245, 249, 0.9);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-placeholder: #94a3b8;
+}
+
+[data-theme='light'] body {
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 85% 30%, rgba(14, 165, 233, 0.08) 0%, transparent 40%);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
