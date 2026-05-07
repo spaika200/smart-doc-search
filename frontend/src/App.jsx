@@ -10,6 +10,7 @@ function App() {
   const [messages, setMessages] = useState([{ role: 'bot', text: 'Tere! Olen sinu nutikas dokumentide assistent. Kuidas saan aidata?', sources: [], context_snippets: [] }]);
   const [inputValue, setInputValue] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
   const [modalSnippet, setModalSnippet] = useState(null); // {filename, text}
   const [selectedTone, setSelectedTone] = useState('Tavaline');
@@ -164,9 +165,16 @@ function App() {
     formData.append('file', file);
 
     setIsUploading(true);
+    setUploadProgress(0);
     try {
       await axios.post(`${API_URL}/upload/`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percentCompleted);
+          }
+        }
       });
       await fetchDocuments();
       showToast(`Fail ${file.name} edukalt lisatud!`, 'success');
@@ -176,6 +184,7 @@ function App() {
       showToast('Faili üleslaadimine ebaõnnestus.', 'error');
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
       e.target.value = null; 
     }
   };
@@ -281,7 +290,13 @@ function App() {
 
         <div className="upload-zone" onClick={() => fileInputRef.current?.click()}>
           {isUploading ? (
-            <div className="loader-spinner" style={{borderTopColor: "var(--primary)", width: "32px", height: "32px"}} />
+            <div style={{width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px'}}>
+              <div className="loader-spinner" style={{borderTopColor: "var(--primary)", width: "32px", height: "32px"}} />
+              <div style={{ width: '80%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden', marginTop: '4px' }}>
+                <div style={{ width: `${uploadProgress}%`, height: '100%', background: 'var(--primary)', transition: 'width 0.2s ease-out' }}></div>
+              </div>
+              <p style={{fontSize: '0.8rem', margin: 0, color: 'var(--text-secondary)'}}>Laadimine... {uploadProgress}%</p>
+            </div>
           ) : (
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -289,7 +304,7 @@ function App() {
               <line x1="12" y1="3" x2="12" y2="15"></line>
             </svg>
           )}
-          <p>{isUploading ? 'Laadimine...' : 'Klõpsa faili valimiseks'}</p>
+          {!isUploading && <p>Klõpsa faili valimiseks</p>}
           <span className="types">Toetatud failid: .pdf, .docx, .txt</span>
         </div>
         <input 
