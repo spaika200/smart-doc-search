@@ -314,6 +314,50 @@
   color: var(--text-primary);
   font-weight: 700;
 }
+.message-bubble blockquote {
+  border-left: 4px solid var(--primary);
+  padding-left: 12px;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-bottom: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 8px 12px;
+  border-radius: 0 4px 4px 0;
+}
+.message-bubble pre {
+  background: rgba(0, 0, 0, 0.4);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--glass-border);
+}
+.message-bubble code {
+  font-family: 'Courier New', Courier, monospace;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #e2e8f0;
+}
+.message-bubble pre code {
+  background: transparent;
+  padding: 0;
+}
+.message-bubble table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.75rem;
+}
+.message-bubble th, .message-bubble td {
+  border: 1px solid var(--glass-border);
+  padding: 8px;
+  text-align: left;
+}
+.message-bubble th {
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+}
 
 .source-tag.clickable {
   cursor: pointer;
