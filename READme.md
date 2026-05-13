@@ -7,6 +7,49 @@ See projekt on täislahendusena loodud **RAG (Retrieval-Augmented Generation)** 
 
 ---
 
+## 📂 Projekti Struktuur
+
+```
+smart-doc-search/
+├── backend/                    # FastAPI server + RAG pipeline
+│   ├── main.py                # API endpoints
+│   ├── database.py            # PostgreSQL schema
+│   ├── embedder.py            # Gemini embeddings
+│   ├── vector_search.py       # RAG pipeline
+│   ├── document_loader.py     # File parsing (PDF, DOCX, TXT)
+│   ├── text_processor.py      # Text chunking
+│   └── requirements.txt       # Python dependencies
+│
+├── frontend/                   # React + Vite SPA
+│   ├── src/
+│   │   ├── App.jsx            # Main component
+│   │   ├── App.css            # Styling
+│   │   └── index.css          # Global styles + themes
+│   ├── package.json           # Node dependencies
+│   └── vite.config.js         # Build config
+│
+└── README.md                  # This file
+```
+
+---
+
+## 🔗 API Endpoint Ülevaade
+
+| Meetod | Endpoint | Eesmärk |
+|--------|----------|---------|
+| `GET` | `/health/` | Andmebaasi ühenduse staatus |
+| `POST` | `/upload/` | Dokumendi üleslaadimine ja indekseerimine |
+| `POST` | `/ask/` | **Core**: RAG query - küsimuse esitamine |
+| `POST` | `/chats/` | Uue vestluse loomine |
+| `GET` | `/chats/` | Kõik vestlused |
+| `GET` | `/chats/{id}/messages` | Vestluse sõnumid |
+| `PUT` | `/chats/{id}` | Vestluse pealkirja muutmine |
+| `DELETE` | `/chats/{id}` | Vestluse kustutamine |
+| `GET` | `/documents/` | Kõik indekseeritud dokumendid |
+| `DELETE` | `/documents/{filename}` | Dokumendi kustutamine |
+
+---
+
 ## 🌟 Süsteemi Võimalused ja Uuendused
 
 Süsteem sisaldab professionaalsel tasemel kasutajaliidest (Glassmorphism) ja ettevõtte tasemel andmebaasilahendust:
