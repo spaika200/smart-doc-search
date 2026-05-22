@@ -17,3 +17,8 @@ Thumbs.db
 
 # Documents
 *.docx
+
+# Testing and Coverage
+.coverage
+htmlcov/
+.pytest_cache/
