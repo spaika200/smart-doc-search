@@ -116,8 +116,13 @@ pip install -r requirements.txt
 ```
 
 ### 3. Andmebaasi Initsialiseerimine (Docker)
-Veendu, et sinu PostgreSQL `pgvector` konteiner jookseb Dockeris (pordil 5432).
-Kuna sõltuvused (sh `psycopg2`) on nüüd installeeritud, saad luua vajalikud andmebaasi tabelid:
+Veenduge, et teil jookseb PostgreSQL koos `pgvector` laiendusega. Kõige lihtsam on see käivitada ühe Docker käsureaga (käivitage see oma terminalis):
+
+```bash
+docker run --name smart-search-db -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e POSTGRES_DB=smart_search -p 5432:5432 -d ankane/pgvector:latest
+```
+
+Kui konteiner töötab, saate luua vajalikud andmebaasi tabelid ja skeemi, käivitades backend kaustas:
 ```bash
 python database.py
 ```
