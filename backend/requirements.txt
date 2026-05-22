@@ -9,3 +9,6 @@ psycopg2-binary
 pgvector
 python-dotenv
 python-multipart
+coverage
+httpx
+pytest
