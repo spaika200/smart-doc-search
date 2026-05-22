@@ -137,6 +137,18 @@ npm run dev
 ```
 Rakendus on nüüd kättesaadav brauseris aadressil: **http://localhost:5173**
 
+### 5. Automaattestide ja Koodikaetuse (Code Coverage) Käivitamine
+Süsteemi stabiilsust ja funktsionaalsust testitakse põhjalikult 29 automaattestiga, mis tagavad **93%** koodikaetuse. Testid on isoleeritud ja käivituvad vähem kui 2 sekundiga ilma väliseid API-sid või andmebaase nõudmata.
+
+Põhjaliku automaattestide ja koodikaetuse juhendi leiate eraldi failist:
+👉 **[TESTIMINE.md](TESTIMINE.md)**
+
+Kiireks testide käivitamiseks:
+```bash
+cd backend
+python tests.py
+```
+
 ---
 
 ## 🛠️ Andmebaasi Struktuur
