@@ -59,6 +59,7 @@ function App() {
         await axios.get(`${API_URL}/health/`);
         setSystemStatus('online');
       } catch (err) {
+        console.error('System health check failed:', err);
         setSystemStatus('offline');
       }
     };
